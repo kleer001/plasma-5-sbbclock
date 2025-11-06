@@ -1,12 +1,9 @@
 import QtQuick 2.15
 import QtQuick.Layouts 1.1
-import QtMultimedia 6.7
 
 import org.kde.plasma.plasmoid 2.0
-import org.kde.plasma.core as PlasmaCore
-import org.kde.ksvg 1.0 as KSvg
+import org.kde.plasma.core 2.0 as PlasmaCore
 import org.kde.plasma.components 3.0 as PlasmaComponents
-import org.kde.plasma.plasma5support 2.0 as P5Support
 import org.kde.kirigami 2.20 as Kirigami
 
 Item {
@@ -25,15 +22,15 @@ Item {
             return (smoothSeconds * (360/59))
         }
     }
-    property bool showSecondsHand: Plasmoid.configuration.showSecondHand
-    property bool showTimezone: Plasmoid.configuration.showTimezoneString
+    property bool showSecondsHand: plasmoid.configuration.showSecondHand
+    property bool showTimezone: plasmoid.configuration.showTimezoneString
     property string timezoneString: ""
-    property real handScale: Math.min(width, height) / Math.max(face.naturalSize.width, face.naturalSize.height)
+    property real handScale: Math.min(width, height) / Math.max(face.nativeWidth, face.nativeHeight)
 
-    Layout.minimumWidth: Plasmoid.formFactor !== PlasmaCore.Types.Vertical ? height : Kirigami.Units.gridUnit
-    Layout.minimumHeight: Plasmoid.formFactor === PlasmaCore.Types.Vertical ? width : Kirigami.Units.gridUnit
+    Layout.minimumWidth: plasmoid.formFactor !== PlasmaCore.Types.Vertical ? height : Kirigami.Units.gridUnit
+    Layout.minimumHeight: plasmoid.formFactor === PlasmaCore.Types.Vertical ? width : Kirigami.Units.gridUnit
 
-    KSvg.Svg {
+    PlasmaCore.Svg {
         id: clockSvg
         imagePath: Qt.resolvedUrl("../images/sbb-clock.svg")
     }
@@ -60,7 +57,7 @@ Item {
         id: clock
         anchors.fill: parent
 
-        KSvg.SvgItem {
+        PlasmaCore.SvgItem {
             id: face
             anchors.centerIn: parent
             width: Math.min(parent.width, parent.height)
@@ -113,17 +110,17 @@ Item {
             svgScale: handScale
         }
 
-        KSvg.SvgItem {
+        PlasmaCore.SvgItem {
             id: center
-            width: naturalSize.width * (face.width / face.naturalSize.width)
-            height: naturalSize.height * (face.width / face.naturalSize.width)
+            width: nativeWidth * (face.width / face.nativeWidth)
+            height: nativeHeight * (face.width / face.nativeWidth)
             anchors.centerIn: parent
             svg: clockSvg
             elementId: "HandCenter"
         }
     }
 
-    KSvg.FrameSvgItem {
+    PlasmaCore.FrameSvgItem {
         id: timezoneBg
         anchors {
             horizontalCenter: parent.horizontalCenter
