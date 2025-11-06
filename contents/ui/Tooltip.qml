@@ -4,14 +4,12 @@
     SPDX-License-Identifier: LGPL-2.0-or-later
 */
 
-pragma ComponentBehavior: Bound
+import QtQuick 2.15
+import QtQuick.Layouts 1.1
 
-import QtQuick
-import QtQuick.Layouts
-
-import org.kde.plasma.components as PlasmaComponents
-import org.kde.plasma.plasmoid
-import org.kde.kirigami as Kirigami
+import org.kde.plasma.components 3.0 as PlasmaComponents
+import org.kde.plasma.plasmoid 2.0
+import org.kde.kirigami 2.20 as Kirigami
 
 Item {
     id: toolTipContentItem
@@ -75,7 +73,7 @@ Item {
             wrapMode: Text.Wrap
 
             property var subText: {
-                if (Plasmoid.configuration.showSeconds === 0) {
+                if (plasmoid.configuration.showSeconds === 0) {
                     return Qt.formatDate(root.currentDateTimeInSelectedTimeZone, Qt.locale(), root.dateFormatString);
                 } else {
                     return "%1\n%2"
@@ -93,7 +91,7 @@ Item {
             id: tooltipSubLabelText
             Layout.minimumWidth: Math.min(implicitWidth, toolTipContentItem.preferredTextWidth)
             Layout.maximumWidth: toolTipContentItem.preferredTextWidth
-            text: (root.fullRepresentationItem as CalendarView)?.monthView.todayAuxilliaryText ?? ""
+            text: root.monthView && root.monthView.todayAuxilliaryText ? root.monthView.todayAuxilliaryText : ""
             textFormat: Text.PlainText
             opacity: 0.75
             visible: !clocks.visible && text.length > 0
@@ -112,31 +110,33 @@ Item {
             Repeater {
                 id: timeZoneRepeater
 
-                model: root.selectedTimeZonesDeduplicatingExplicitLocalTimeZone()
-                    // Duplicate each entry, because that's how we do "tables" with 2 columns in QML. :-\
-                    // An alternative would be a nested Repeater with an ObjectModel.
-                    .reduce((array, item) => {
-                        array.push(item, item);
-                        return array;
-                    }, [])
+                model: {
+                    var zones = root.selectedTimeZonesDeduplicatingExplicitLocalTimeZone();
+                    var array = [];
+                    for (var i = 0; i < zones.length; i++) {
+                        array.push(zones[i]);
+                        array.push(zones[i]);
+                    }
+                    return array;
+                }
 
                 PlasmaComponents.Label {
-                    required property int index
-                    required property string modelData
+                    property int itemIndex: index
+                    property string timeZone: modelData
 
                     // Layout.fillWidth is buggy here
-                    Layout.alignment: index % 2 === 0 ? Qt.AlignRight : Qt.AlignLeft
+                    Layout.alignment: itemIndex % 2 === 0 ? Qt.AlignRight : Qt.AlignLeft
                     text: {
-                        if (index % 2 === 0) {
-                            return i18nc("@label %1 is a city or time zone name", "%1:", root.displayStringForTimeZone(modelData));
+                        if (itemIndex % 2 === 0) {
+                            return i18nc("@label %1 is a city or time zone name", "%1:", root.displayStringForTimeZone(timeZone));
                         } else {
-                            return timeForZone(modelData, Plasmoid.configuration.showSeconds > 0);
+                            return timeForZone(timeZone, plasmoid.configuration.showSeconds > 0);
                         }
                     }
                     textFormat: Text.PlainText
-                    font.weight: root.timeZoneResolvesToLastSelectedTimeZone(modelData) ? Font.Bold : Font.Normal
+                    font.weight: root.timeZoneResolvesToLastSelectedTimeZone(timeZone) ? Font.Bold : Font.Normal
                     font.features: {
-                        if (index % 2 === 1) {
+                        if (itemIndex % 2 === 1) {
                             return { "tnum": 1 }
                         } else {
                             return {}

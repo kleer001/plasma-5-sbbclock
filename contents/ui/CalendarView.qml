@@ -7,31 +7,21 @@
     SPDX-License-Identifier: GPL-2.0-or-later
 */
 
-pragma ComponentBehavior: Bound
+import QtQuick 2.15
+import QtQuick.Layouts 1.1
 
-import QtQuick
-import QtQuick.Layouts
-
-import org.kde.plasma.plasmoid
-import org.kde.ksvg as KSvg
-import org.kde.plasma.workspace.calendar as PlasmaCalendar
-import org.kde.plasma.components as PlasmaComponents
-import org.kde.plasma.extras as PlasmaExtras
-import org.kde.plasma.private.digitalclock
-import org.kde.config as KConfig
+import org.kde.plasma.plasmoid 2.0
+import org.kde.plasma.core 2.0 as PlasmaCore
+import org.kde.plasma.calendar 2.0 as PlasmaCalendar
+import org.kde.plasma.components 3.0 as PlasmaComponents
+import org.kde.plasma.extras 2.0 as PlasmaExtras
 import org.kde.kcmutils as KCMUtils
-import org.kde.kirigami as Kirigami
+import org.kde.kirigami 2.20 as Kirigami
 
-// Top-level layout containing:
-// - Leading column with world clock and agenda view
-// - Trailing column with current date header and calendar
-//
-// Trailing column fills exactly half of the popup width, then there's 1
-// logical pixel wide separator, and the rest is left for the Leading.
-// Representation's header is intentionally zero-sized, because Calendar view
-// brings its own header, and there's currently no other way to stack them.
-PlasmaExtras.Representation {
+Item {
     id: calendar
+
+    signal monthViewChanged(var monthView)
 
     readonly property var appletInterface: root
 
@@ -48,7 +38,7 @@ PlasmaExtras.Representation {
 
     readonly property int paddings: Kirigami.Units.largeSpacing
     readonly property bool showAgenda: eventPluginsManager.enabledPlugins.length > 0
-    readonly property bool showClocks: Plasmoid.configuration.selectedTimeZones.length > 1
+    readonly property bool showClocks: plasmoid.configuration.selectedTimeZones.length > 1
 
     readonly property alias monthView: monthView
     // This helps synchronize the header of the agenda and the monthView.
@@ -70,7 +60,7 @@ PlasmaExtras.Representation {
 
     PlasmaCalendar.EventPluginsManager {
         id: eventPluginsManager
-        enabledPlugins: Plasmoid.configuration.enabledCalendarPlugins
+        enabledPlugins: plasmoid.configuration.enabledCalendarPlugins
     }
 
     // Having this in place helps preserving top margins for Pin and Configure
@@ -258,7 +248,7 @@ PlasmaExtras.Representation {
                         id: eventItem
 
                         // Crashes if the type is declared as eventData (which is Q_GADGET)
-                        required property /*PlasmaCalendar.eventData*/var modelData
+                        property var itemData: modelData
 
                         width: ListView.view.width
 
@@ -267,34 +257,34 @@ PlasmaExtras.Representation {
                         text: eventTitle.text
                         hoverEnabled: true
                         highlighted: ListView.isCurrentItem
-                        Accessible.description: modelData.description
+                        Accessible.description: itemData.description
                         readonly property bool hasTime: {
                             // Explicitly all-day event
-                            if (modelData.isAllDay) {
+                            if (itemData.isAllDay) {
                                 return false;
                             }
                             // Multi-day event which does not start or end today (so
                             // is all-day from today's point of view)
-                            if (modelData.startDateTime - monthView.currentDate < 0 &&
-                                modelData.endDateTime - monthView.currentDate > 86400000) { // 24hrs in ms
+                            if (itemData.startDateTime - monthView.currentDate < 0 &&
+                                itemData.endDateTime - monthView.currentDate > 86400000) { // 24hrs in ms
                                 return false;
                             }
 
                             // Non-explicit all-day event
-                            const startIsMidnight = modelData.startDateTime.getHours() === 0
-                                && modelData.startDateTime.getMinutes() === 0;
+                            const startIsMidnight = itemData.startDateTime.getHours() === 0
+                                && itemData.startDateTime.getMinutes() === 0;
 
-                            const endIsMidnight = modelData.endDateTime.getHours() === 0
-                                && modelData.endDateTime.getMinutes() === 0;
+                            const endIsMidnight = itemData.endDateTime.getHours() === 0
+                                && itemData.endDateTime.getMinutes() === 0;
 
-                            const sameDay = modelData.startDateTime.getDate() === modelData.endDateTime.getDate()
-                                && modelData.startDateTime.getDay() === modelData.endDateTime.getDay();
+                            const sameDay = itemData.startDateTime.getDate() === itemData.endDateTime.getDate()
+                                && itemData.startDateTime.getDay() === itemData.endDateTime.getDay();
 
                             return !(startIsMidnight && endIsMidnight && sameDay);
                         }
 
                         PlasmaComponents.ToolTip {
-                            text: eventItem.modelData.description
+                            text: eventItem.itemData.description
                             visible: text !== "" && eventItem.hovered
                         }
 
@@ -313,24 +303,24 @@ PlasmaExtras.Representation {
                                 Layout.rowSpan: 2
                                 Layout.fillHeight: true
 
-                                color: eventItem.modelData.eventColor
+                                color: eventItem.itemData.eventColor
                                 width: 5
-                                visible: eventItem.modelData.eventColor !== ""
+                                visible: eventItem.itemData.eventColor !== ""
                             }
 
                             PlasmaComponents.Label {
                                 id: startTimeLabel
 
-                                readonly property bool startsToday: eventItem.modelData.startDateTime - monthView.currentDate >= 0
-                                readonly property bool startedYesterdayLessThan12HoursAgo: eventItem.modelData.startDateTime - monthView.currentDate >= -43200000 //12hrs in ms
+                                readonly property bool startsToday: eventItem.itemData.startDateTime - monthView.currentDate >= 0
+                                readonly property bool startedYesterdayLessThan12HoursAgo: eventItem.itemData.startDateTime - monthView.currentDate >= -43200000 //12hrs in ms
 
                                 Layout.row: 0
                                 Layout.column: 1
                                 Layout.minimumWidth: dateLabelMetrics.width
 
                                 text: startsToday || startedYesterdayLessThan12HoursAgo
-                                    ? Qt.formatTime(eventItem.modelData.startDateTime)
-                                    : agenda.formatDateWithoutYear(eventItem.modelData.startDateTime)
+                                    ? Qt.formatTime(eventItem.itemData.startDateTime)
+                                    : agenda.formatDateWithoutYear(eventItem.itemData.startDateTime)
                                 textFormat: Text.PlainText
                                 horizontalAlignment: Qt.AlignRight
                                 visible: eventItem.hasTime
@@ -339,16 +329,16 @@ PlasmaExtras.Representation {
                             PlasmaComponents.Label {
                                 id: endTimeLabel
 
-                                readonly property bool endsToday: eventItem.modelData.endDateTime - monthView.currentDate <= 86400000 // 24hrs in ms
-                                readonly property bool endsTomorrowInLessThan12Hours: eventItem.modelData.endDateTime - monthView.currentDate <= 86400000 + 43200000 // 36hrs in ms
+                                readonly property bool endsToday: eventItem.itemData.endDateTime - monthView.currentDate <= 86400000 // 24hrs in ms
+                                readonly property bool endsTomorrowInLessThan12Hours: eventItem.itemData.endDateTime - monthView.currentDate <= 86400000 + 43200000 // 36hrs in ms
 
                                 Layout.row: 1
                                 Layout.column: 1
                                 Layout.minimumWidth: dateLabelMetrics.width
 
                                 text: endsToday || endsTomorrowInLessThan12Hours
-                                    ? Qt.formatTime(eventItem.modelData.endDateTime)
-                                    : agenda.formatDateWithoutYear(eventItem.modelData.endDateTime)
+                                    ? Qt.formatTime(eventItem.itemData.endDateTime)
+                                    : agenda.formatDateWithoutYear(eventItem.itemData.endDateTime)
                                 textFormat: Text.PlainText
                                 horizontalAlignment: Qt.AlignRight
                                 opacity: 0.7
@@ -364,7 +354,7 @@ PlasmaExtras.Representation {
                                 Layout.fillWidth: true
 
                                 elide: Text.ElideRight
-                                text: eventItem.modelData.title
+                                text: eventItem.itemData.title
                                 textFormat: Text.PlainText
                                 verticalAlignment: Text.AlignVCenter
                                 maximumLineCount: 2
@@ -389,13 +379,15 @@ PlasmaExtras.Representation {
         }
 
         // Horizontal separator line between events and time zones
-        KSvg.SvgItem {
+        PlasmaCore.SvgItem {
             visible: worldClocks.visible && agenda.visible
 
             Layout.fillWidth: true
-            Layout.preferredHeight: naturalSize.height
+            Layout.preferredHeight: nativeHeight
 
-            imagePath: "widgets/line"
+            svg: PlasmaCore.Svg {
+                imagePath: "widgets/line"
+            }
             elementId: "horizontal-line"
         }
 
@@ -492,9 +484,9 @@ PlasmaExtras.Representation {
                 delegate: PlasmaComponents.ItemDelegate {
                     id: listItem
 
-                    required property string modelData
+                    property string timeZoneData: modelData
 
-                    readonly property bool isCurrentTimeZone: root.timeZoneResolvesToLastSelectedTimeZone(modelData)
+                    readonly property bool isCurrentTimeZone: root.timeZoneResolvesToLastSelectedTimeZone(timeZoneData)
 
                     width: ListView.view.width - ListView.view.leftMargin - ListView.view.rightMargin
 
@@ -502,8 +494,8 @@ PlasmaExtras.Representation {
                     rightPadding: calendar.paddings
 
                     highlighted: ListView.isCurrentItem
-                    Accessible.name: root.displayStringForTimeZone(modelData)
-                    Accessible.description: root.timeForZone(modelData, Plasmoid.configuration.showSeconds === 2)
+                    Accessible.name: root.displayStringForTimeZone(timeZoneData)
+                    Accessible.description: root.timeForZone(timeZoneData, plasmoid.configuration.showSeconds === 2)
 
                     // Only highlight with keyboard
                     down: false
@@ -514,7 +506,7 @@ PlasmaExtras.Representation {
 
                         PlasmaComponents.Label {
                             Layout.fillWidth: true
-                            text: root.displayStringForTimeZone(listItem.modelData)
+                            text: root.displayStringForTimeZone(listItem.timeZoneData)
                             textFormat: Text.PlainText
                             font.weight: listItem.isCurrentTimeZone ? Font.Bold : Font.Normal
                             maximumLineCount: 1
@@ -523,7 +515,7 @@ PlasmaExtras.Representation {
 
                         PlasmaComponents.Label {
                             horizontalAlignment: Qt.AlignRight
-                            text: root.timeForZone(listItem.modelData, Plasmoid.configuration.showSeconds === 2)
+                            text: root.timeForZone(listItem.timeZoneData, plasmoid.configuration.showSeconds === 2)
                             textFormat: Text.PlainText
                             font.weight: listItem.isCurrentTimeZone ? Font.Bold : Font.Normal
                             elide: Text.ElideRight
@@ -537,7 +529,7 @@ PlasmaExtras.Representation {
 
     // Vertical separator line between columns
     // =======================================
-    KSvg.SvgItem {
+    PlasmaCore.SvgItem {
         id: mainSeparator
 
         anchors {
@@ -549,10 +541,12 @@ PlasmaExtras.Representation {
             topMargin: calendar.parent ? -calendar.parent.y : 0
         }
 
-        width: naturalSize.width
+        width: nativeWidth
         visible: calendar.showAgenda || calendar.showClocks
 
-        imagePath: "widgets/line"
+        svg: PlasmaCore.Svg {
+            imagePath: "widgets/line"
+        }
         elementId: "vertical-line"
     }
 
@@ -589,19 +583,19 @@ PlasmaExtras.Representation {
 
             eventPluginsManager: eventPluginsManager
             today: root.currentDateTimeInSelectedTimeZone
-            firstDayOfWeek: Plasmoid.configuration.firstDayOfWeek > -1
-                ? Plasmoid.configuration.firstDayOfWeek
+            firstDayOfWeek: plasmoid.configuration.firstDayOfWeek > -1
+                ? plasmoid.configuration.firstDayOfWeek
                 : Qt.locale().firstDayOfWeek
-            showWeekNumbers: Plasmoid.configuration.showWeekNumbers
-
-            showDigitalClockHeader: true
-            digitalClock: Plasmoid
-            eventButton: addEventButton
+            showWeekNumbers: plasmoid.configuration.showWeekNumbers
 
             KeyNavigation.left: KeyNavigation.tab
             KeyNavigation.tab: addEventButton.visible ? addEventButton : addEventButton.KeyNavigation.down
-            Keys.onUpPressed: event => {
+            Keys.onUpPressed: {
                 viewHeader.tabBar.currentItem.forceActiveFocus(Qt.BacktabFocusReason);
+            }
+
+            Component.onCompleted: {
+                calendar.monthViewChanged(monthView);
             }
         }
     }
