@@ -25,20 +25,17 @@ Item {
     readonly property real requiredHeight: contentLayout.height
 
     // Configuration properties
-    readonly property bool showSeconds: plasmoid.configuration.showSecondHand ? plasmoid.configuration.showSecondHand : false
-    readonly property bool showTimezone: plasmoid.configuration.showTimezoneString ? plasmoid.configuration.showTimezoneString : false
+    readonly property bool showSeconds: plasmoid.configuration.showSecondHand
+    readonly property bool showTimezone: plasmoid.configuration.showTimezoneString
     readonly property bool showDate: plasmoid.configuration.showDate !== undefined ? plasmoid.configuration.showDate : true
-    readonly property bool transparentBackground: plasmoid.configuration.transparentBackground ? plasmoid.configuration.transparentBackground : false
-    readonly property bool blinkingTimeSeparator: plasmoid.configuration.blinkingTimeSeparator ? plasmoid.configuration.blinkingTimeSeparator : false
-    readonly property bool useCustomColors: plasmoid.configuration.useCustomColors ? plasmoid.configuration.useCustomColors : false
+    readonly property bool transparentBackground: plasmoid.configuration.transparentBackground
+    readonly property bool blinkingTimeSeparator: plasmoid.configuration.blinkingTimeSeparator
+    readonly property bool useCustomColors: plasmoid.configuration.useCustomColors
     readonly property color timeColor: plasmoid.configuration.timeColor || PlasmaCore.Theme.textColor
     readonly property color dateColor: plasmoid.configuration.dateColor || PlasmaCore.Theme.textColor
 
     // Time format handling
     readonly property string timeFormat: plasmoid.configuration.timeFormat || "hh:mm"
-
-    // Use system locale for formatting
-    readonly property string effectiveTimeFormat: timeFormat
 
     // Date format handling
     readonly property string dateFormat: plasmoid.configuration.dateFormat || "ddd, MMM d"
@@ -46,8 +43,8 @@ Item {
     // Font properties
     readonly property int timeFontSize: plasmoid.configuration.timeFontSize !== undefined ? plasmoid.configuration.timeFontSize : 24
     readonly property int dateFontSize: plasmoid.configuration.dateFontSize !== undefined ? plasmoid.configuration.dateFontSize : 18
-    readonly property bool timeIsBold: plasmoid.configuration.timeIsBold ? plasmoid.configuration.timeIsBold : false
-    readonly property bool dateIsBold: plasmoid.configuration.dateIsBold ? plasmoid.configuration.dateIsBold : false
+    readonly property bool timeIsBold: plasmoid.configuration.timeIsBold
+    readonly property bool dateIsBold: plasmoid.configuration.dateIsBold
     readonly property string fontFamily: plasmoid.configuration.fontFamily || ""
 
     property bool separatorVisible: true
