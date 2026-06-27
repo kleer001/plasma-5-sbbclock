@@ -5,14 +5,10 @@
 */
 
 import QtQuick 2.15
-import QtQuick.Controls 2.15
+import QtQuick.Controls 2.15 as QQC2
 import QtQuick.Layouts 1.15
-import QtQuick.Dialogs
+import QtQuick.Dialogs 1.3
 import org.kde.kirigami 2.20 as Kirigami
-import org.kde.plasma.core as PlasmaCore
-import org.kde.kcmutils as KCM
-import Qt.labs.platform as Platform
-import QtQuick.Controls as QQC2
 import org.kde.kcmutils as KCMUtils
 
 KCMUtils.SimpleKCM {
@@ -470,9 +466,9 @@ KCMUtils.SimpleKCM {
     ColorDialog {
         id: timeColorDialog
         title: i18n("Choose Time Color")
-        selectedColor: timeColorField.text || "#ffffff"
+        color: timeColorField.text || "#ffffff"
         onAccepted: {
-            var color = selectedColor.toString()
+            var color = timeColorDialog.color.toString()
             timeColorField.text = color
             cfg_timeColor = color
         }
@@ -481,9 +477,9 @@ KCMUtils.SimpleKCM {
     ColorDialog {
         id: dateColorDialog
         title: i18n("Choose Date Color")
-        selectedColor: dateColorField.text || "#ffffff"
+        color: dateColorField.text || "#ffffff"
         onAccepted: {
-            var color = selectedColor.toString()
+            var color = dateColorDialog.color.toString()
             dateColorField.text = color
             cfg_dateColor = color
         }
@@ -492,9 +488,9 @@ KCMUtils.SimpleKCM {
     ColorDialog {
         id: eventColorDialog
         title: i18n("Choose Event Color")
-        selectedColor: eventColorField.text || "#ff0000"
+        color: eventColorField.text || "#ff0000"
         onAccepted: {
-            var color = selectedColor.toString()
+            var color = eventColorDialog.color.toString()
             eventColorField.text = color
             cfg_eventColor = color
         }
@@ -505,8 +501,8 @@ KCMUtils.SimpleKCM {
         title: i18n("Select Sound File")
         nameFilters: ["Sound files (*.wav *.mp3 *.ogg)", "All files (*)"]
         onAccepted: {
-            if (fileDialog.selectedFile) {
-                hourSignalSoundField.text = fileDialog.selectedFile
+            if (fileDialog.fileUrl) {
+                hourSignalSoundField.text = fileDialog.fileUrl
             }
         }
     }
